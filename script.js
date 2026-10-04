@@ -9,7 +9,14 @@ const notes = [];
 
 function renderNotes() {
 	notesList.replaceChildren();
-	noteCount.textContent = `${notes.length} ${notes.length === 1 ? 'note' : 'notes'}`;
+
+	if (notes.length === 0) {
+		noteCount.textContent = 'You have no notes yet.';
+	} else if (notes.length === 1) {
+		noteCount.textContent = 'You have 1 note.';
+	} else {
+		noteCount.textContent = `You have ${notes.length} notes.`;
+	}
 
 	notes.forEach((note) => {
 		const noteItem = document.createElement('li');
@@ -41,7 +48,12 @@ noteForm.addEventListener('submit', (event) => {
 	const text = noteInput.value.trim();
 
 	if (!text) {
-		errorMessage.textContent = 'Please enter a note.';
+		errorMessage.textContent = 'Please type a note first.';
+		return;
+	}
+
+	if (text.length > 200) {
+		errorMessage.textContent = 'Notes must be 200 characters or fewer.';
 		return;
 	}
 
