@@ -1,11 +1,28 @@
 const noteForm = document.querySelector('#note-form');
 const noteInput = document.querySelector('#note-input');
 const noteCategory = document.querySelector('#note-category');
+const searchInput = document.querySelector('#search-input');
 const notesList = document.querySelector('#notes-list');
 const noteCount = document.querySelector('#note-count');
 const errorMessage = document.querySelector('#error-message');
 
-const notes = [];
+const storageKey = 'quick-notes';
+const notes = loadNotes();
+
+function loadNotes() {
+	try {
+		const savedNotes = JSON.parse(localStorage.getItem(storageKey));
+		return Array.isArray(savedNotes)
+			? savedNotes.map((note) => ({ ...note, createdAt: new Date(note.createdAt) }))
+			: [];
+	} catch (error) {
+		return [];
+	}
+}
+
+function saveNotes() {
+	localStorage.setItem(storageKey, JSON.stringify(notes));
+}
 
 function renderNotes() {
 	notesList.replaceChildren();
@@ -18,7 +35,20 @@ function renderNotes() {
 		noteCount.textContent = `You have ${notes.length} notes.`;
 	}
 
-	notes.forEach((note) => {
+	const searchWords = searchInput.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+	const filteredNotes = notes.filter((note) => {
+		const noteText = note.text.toLowerCase();
+		return searchWords.every((word) => noteText.includes(word));
+	});
+
+	if (searchWords.length > 0 && filteredNotes.length === 0) {
+		const emptyMessage = document.createElement('li');
+		emptyMessage.textContent = 'No notes match your search.';
+		notesList.append(emptyMessage);
+		return;
+	}
+
+	filteredNotes.forEach((note) => {
 		const noteItem = document.createElement('li');
 		const categoryLabel = document.createElement('small');
 		const noteText = document.createElement('p');
@@ -35,6 +65,7 @@ function renderNotes() {
 		deleteButton.addEventListener('click', () => {
 			const noteIndex = notes.findIndex((item) => item.id === note.id);
 			notes.splice(noteIndex, 1);
+			saveNotes();
 			renderNotes();
 		});
 
@@ -64,9 +95,12 @@ noteForm.addEventListener('submit', (event) => {
 		createdAt: new Date()
 	});
 
+	saveNotes();
 	errorMessage.textContent = '';
 	noteInput.value = '';
 	renderNotes();
 });
+
+searchInput.addEventListener('input', renderNotes);
 
 renderNotes();
